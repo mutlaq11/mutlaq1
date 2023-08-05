@@ -1,3 +1,6 @@
 transformers
 sentencepiece
 torch
+streamlit
+pandas
+openpyxl
