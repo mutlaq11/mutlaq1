@@ -1,5 +1,6 @@
 import streamlit as st
 from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
+import pandas as pd
 
 # Load the model
 model_name = "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli"
@@ -9,16 +10,25 @@ classifier = pipeline("zero-shot-classification", model=model, tokenizer=tokeniz
 
 st.title("Sequence Classification")
 
-# Input
-sequence_to_classify = st.text_input("Enter the sequence to classify:")
-if st.button("Classify"):
-    if sequence_to_classify:
-        candidate_labels = ["transportations", "food", "bathroom", "guidance"]
+# File upload
+uploaded_file = st.file_uploader("Upload an Excel file", type=['xlsx'])
+
+if uploaded_file is not None:
+    data = pd.read_excel(uploaded_file)
+    
+    candidate_labels = ["transportations", "food", "bathroom", "guidance"]
+    labels = []
+    for index, row in data.iterrows():
         try:
+            sequence_to_classify = row[0] # assuming the text to classify is in the first column
             output = classifier(sequence_to_classify, candidate_labels, multi_label=False)
-            st.write("Classification:", output['labels'][0])
+            labels.append(output['labels'][0])
         except Exception as e:
-            st.error("An error occurred during classification.")
+            st.error(f"An error occurred during classification for row {index}.")
             st.error(str(e))
-    else:
-        st.warning("Please enter a sequence to classify.")
+
+    # Add classification results to the data frame
+    data['label'] = labels
+    
+    # Display data
+    st.dataframe(data)
